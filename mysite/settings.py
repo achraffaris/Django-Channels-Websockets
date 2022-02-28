@@ -26,9 +26,9 @@ SECRET_KEY = 'b#s*_o(3t3ai_k(c5po@h7a=nj5#vjkd3u7ckhnx@)mi=8fn67'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
-
+CSRF_COOKIE_DOMAIN = '127.0.0.1'
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,8 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-	'urlshortener',
-	'rest_framework',
 	'channels',
 	'chat',
 ]
@@ -75,13 +73,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'mysite.wsgi.application'
 ASGI_APPLICATION = "mysite.asgi.application"
 
-import redis
-
-# step 2: define our connection information for Redis
-# Replaces with your configuration information
-redis_host = "localhost"
-redis_port = 6379
-redis_password = ""
 
 CHANNEL_LAYERS = {
     'default': {
@@ -121,44 +112,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# DRF GLOBAL CONFIGURATION
-REST_FRAMEWORK = {
-	'DEFAULT_AUTHENTICATION_CLASSES': [
-		'rest_framework_simplejwt.authentication.JWTAuthentication',
-	]
-}
-# JWT AUTHENTICATION CONFIG
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': False,
-    'UPDATE_LAST_LOGIN': False,
 
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JWK_URL': None,
-    'LEEWAY': 0,
-
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
-
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
-
-    'JTI_CLAIM': 'jti',
-
-    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-}
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -179,3 +133,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 ALLOWED_HOSTS = ['*']
 X_FRAME_OPTIONS = '*'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
