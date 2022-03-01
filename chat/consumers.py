@@ -10,18 +10,17 @@ class ChatConsumer(WebsocketConsumer):
         super().__init__(args, kwargs)
         self.room_name = None
         self.room_group_name = None
-        self.room = None
         self.user = None  # new
-
+        self.sender = None
+        self.receiver = None
+        self.username = None
+        self.room = None
     def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = 'chat_%s' % self.room_name
-        '''
+        self.sender = self.scope['user']
+        self.room_group_name = 'chat_%s' % 15
         # Disconnect if user does not exist or not authenticated
         if not User.objects.filter(id=self.scope['user'].id).exists():
             return
-        '''    
-        self.user = self.scope['user']
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
@@ -35,34 +34,65 @@ class ChatConsumer(WebsocketConsumer):
             self.channel_name
         )
 
-    # Receive message from WebSocket
+       # Receive message from WebSocket
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-
-        # Send message to room group
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': message,
-            }
-        )
+        self.sender = self.scope['user']
+        self.type = text_data_json['type']
+        if self.type == 'typing_message':
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'type_message',
+                    'username': self.sender.username
+                }
+            )
+        elif self.type == 'sending_message':
+            receiver = text_data_json['receiver']
+            message = text_data_json['message']
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': message,
+                    'username': self.sender.username,
+                    'receiver':receiver
+                }
+            )
+        elif self.type == 'stop_typing_message':
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'stop_typing',
+                }
+            )
+    def stop_typing(self, event):
+        self.send(text_data=json.dumps({
+            'type':'stop_typing_message'
+        }))
+    def type_message(self, event):
+        # Send message to WebSocket
+        self.send(text_data=json.dumps({
+            'username':event['username'],
+            'type':'typing_message'
+        }))
 
     # Receive message from room group
     def chat_message(self, event):
         message = event['message']
-        user = self.scope['user']
-        print(self.scope)
         # Send message to WebSocket
         self.send(text_data=json.dumps({
             'message': message,
-            'user':'anonym'	
+            'username': event['username'],
+            'type':'sending_message'
         }))
-        '''mysite/
-        if not user.is_authenticated:
-            models.Message.objects.create(sender="Anonymous",message=message)
-        else:
-            models.Message.objects.create(sender=user,message=message)
-        '''
+        self.receiver = User.objects.get(id=event['receiver'])
+        # get or create a room of receiver.id + sender.id
+        users = User.objects.filter(id__in=[self.sender.id, self.receiver.id])
+        print("receiver == "+str(self.receiver) + " sender == " + str(self.sender))
+        rooms = models.Room.objects.get(id=15)
+        if (self.sender.id == self.scope['user'].id):
+            models.Message.objects.create(room=rooms,
+                                        sender=self.sender.username,
+                                        message=message)
 

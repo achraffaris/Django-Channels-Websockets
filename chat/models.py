@@ -7,5 +7,6 @@ class Room(models.Model):
 
 class Message(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    sender = models.TextField(default="anonym")
     message = models.TextField(max_length=300)
+    sender = models.TextField(max_length=100)
+    timestamp = models.DateField(auto_now_add=True)

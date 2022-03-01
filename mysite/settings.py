@@ -93,7 +93,7 @@ DATABASES = {
     }
 }
 
-
+CSRF_TRUSTED_ORIGINS = ["https://8000-afaris42-djangochannelsw-c5r60rw1716.ws-eu34.gitpod.io"]
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 

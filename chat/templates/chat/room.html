@@ -4,18 +4,19 @@
 <head>
     <meta charset="utf-8"/>
     <title>Chat Room</title>
+
 </head>
 <body>
 
-    <ul>
+    <ul id="messages">
         {% for m in messages %}
-        <li>{{m.sender}}: {{m.message}}</li>
+        <li><strong>{{m.sender}}:</strong> {{m.message}}</li>
         {% endfor %}
       </ul>  
     
     
-    <p id="chat-log" cols="100" rows="20"></p><br>
-    <input id="chat-message-input" type="text" size="100"><br>
+    <p id="is_typing"  cols="100" rows="20"></p><br>
+    <input id="chat-message-input" onkeypress="typing()" type="text" size="100"><br>
     <input id="chat-message-submit" type="button" value="Send">
     {{ room_name|json_script:"room-name" }}
     <script>
@@ -28,10 +29,30 @@
             + roomName
             + '/'
         );
-
+        let is_typing = document.getElementById("is_typing");
+        var timer = null;
+        function typing(){
+            chatSocket.send(JSON.stringify({
+                'type': 'typing_message',
+                'username': "{{request.user.username}}"
+            }));
+            clearTimeout(timer);
+            timer = setTimeout(stopTyping, 3000)
+        };
+        function stopTyping() {
+            chatSocket.send(JSON.stringify({
+                'type': 'stop_typing_message',
+                'username': "{{request.user.username}}"
+            }));
+        }
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            $("ul").append('<li>'+data.user + ': ' + data.message+'</li>');
+            if (data.type == 'typing_message' && data.username != "{{request.user.username}}")
+                is_typing.innerHTML = "  <strong>" + data.username + "</strong> is typing ...";
+            else if (data.type == 'sending_message')
+                $("#messages").append('<li><strong>'+data.username + ':</strong> ' + data.message+'</li>');
+            else if (data.type == 'stop_typing_message')
+                is_typing.innerHTML = "";
         };
 
         chatSocket.onclose = function(e) {
@@ -48,12 +69,18 @@
         document.querySelector('#chat-message-submit').onclick = function(e) {
             const messageInputDom = document.querySelector('#chat-message-input');
             const message = messageInputDom.value;
+            stopTyping();
             chatSocket.send(JSON.stringify({
-                'message': message
+                'message': message,
+                'type': 'sending_message',
+                'receiver': "{{room_name}}",
+                'username': "{{request.user.username}}",
+                'receiver': 2
             }));
             messageInputDom.value = '';
         };
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
 </body>
 </html>

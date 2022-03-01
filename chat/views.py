@@ -1,7 +1,13 @@
 from django.shortcuts import render
 from . import models
+from django.contrib.auth.models import User
+
 def index(request):
-    return render(request, 'chat/index.html')
+    users = User.objects.all()
+    context = {
+        'users':users
+    }
+    return render(request, 'chat/index.html', context)
 
 
 def room(request, room_name):
